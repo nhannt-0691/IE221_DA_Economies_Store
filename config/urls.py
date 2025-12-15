@@ -16,15 +16,26 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from accounts.views import RegisterAPI, LoginAPIView
+from accounts.views import RegisterAPI, LoginAPIView, UpdateProfileView, UserListAPIView, ChangeAccountStatusAPIView, GetProfileView
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
+    
     # API accounts
     path('api/accounts/register/', RegisterAPI.as_view(), name='register'),
 
     # JWT auth
     path('api/auth/login/', LoginAPIView.as_view(), name='token_obtain_pair'),
+    
+    # User profile
+    path('api/accounts/profile/', GetProfileView.as_view(), name='get_profile'),
+    path('api/accounts/update_profile/', UpdateProfileView.as_view(), name='update_profile'),
+    
+    #ADMIN
+    #User list
+    path('api/users/user_list/', UserListAPIView.as_view(), name='user_list'),
+    
+    #banned user
+    path('api/users/is_active/user_id=<int:user_id>', ChangeAccountStatusAPIView.as_view(), name='change_user_status'),
 ]
