@@ -12,7 +12,7 @@ class CustomUserAdmin(UserAdmin):
     readonly_fields = ("updated_at",)
 
     list_display = (
-        "username", "email", "phone", "address",
+        "username", "email", "first_name", "last_name", "phone", "address",
         "is_staff", "is_active", "date_joined", "last_login", "updated_at"
     )
     search_fields = ("username", "email", "phone", "address")

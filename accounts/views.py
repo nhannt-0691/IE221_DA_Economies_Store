@@ -49,6 +49,9 @@ class LoginAPIView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
     
 def build_profile_data(user):
+    def to_local(dt):
+        return timezone.localtime(dt).strftime("%Y-%m-%d %H:%M:%S") if dt else None
+    
     return {
         'username': user.username,
         'email': user.email,
@@ -59,9 +62,9 @@ def build_profile_data(user):
         
         'is_staff': user.is_staff,
         'is_active': user.is_active,
-        'date_joined': user.date_joined,
-        'last_login': user.last_login,
-        'updated_at': user.updated_at,
+        'date_joined': to_local(user.date_joined),
+        'last_login': to_local(user.last_login),
+        'updated_at': to_local(getattr(user, 'updated_at', None)),
     }
 
 
