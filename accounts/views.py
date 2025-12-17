@@ -1,4 +1,5 @@
 from __future__ import annotations
+from django.http import JsonResponse
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.shortcuts import render
@@ -14,7 +15,12 @@ class RegisterAPI(APIView):
     def post(self, request):
         username = request.data.get('username')
         password = request.data.get('password')
-        email = request.data.get('email')
+        email = request.data.get('email') 
+        
+        if User.objects.filter(email=email).exists():
+            return Response({
+                "error": "Email already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)  
 
         if not username or not password or not email:
             return Response({'error': 'Username, password, and email are required.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -26,8 +32,7 @@ class RegisterAPI(APIView):
         user.save()
 
         return Response({'message': 'User registered successfully.'}, status=status.HTTP_201_CREATED)
-    
-    
+     
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         
@@ -66,34 +71,88 @@ class GetProfileView(APIView):
  
 class UpdateProfileView(APIView):
     permission_classes = [IsAuthenticated]
-    
-    def patch(self, request):
-        user = request.user
-        first_name = request.data.get('first_name')
-        last_name = request.data.get('last_name')
-        email = request.data.get('email')
 
-        if first_name:
-            user.first_name = first_name
-        if last_name:
-            user.last_name = last_name
+    def patch(self, request):
+        ALLOWED_FIELDS = {"first_name", "last_name", "email"}
+
+        for key in request.data.keys():
+            if key not in ALLOWED_FIELDS:
+                return Response(
+                    {"error": f"Field '{key}' is not allowed."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        user = request.user
+
+        email = request.data.get("email")
         if email:
+            if User.objects.filter(email=email).exclude(id=user.id).exists():
+                return Response(
+                    {"error": "Email already exists."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             user.email = email
 
+        first_name = request.data.get("first_name")
+        if first_name:
+            user.first_name = first_name
+
+        last_name = request.data.get("last_name")
+        if last_name:
+            user.last_name = last_name
+
         user.save()
-        profile_data = build_profile_data(request.user)
-        
+
         return Response({
-            'message': 'Profile updated successfully.',
-            'profile': profile_data
-        }, status=status.HTTP_200_OK)    
-####ADMIN VIEWS####
-    
+            "message": "Profile updated successfully.",
+            "profile": build_profile_data(user),
+        }, status=status.HTTP_200_OK)
+   
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        old_password = request.data.get("old_password")
+        new_password = request.data.get("new_password")
+
+        if not old_password or not new_password:
+            return Response(
+                {"error": "Old password and new password are required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user = request.user
+
+        if not user.check_password(old_password):
+            return Response(
+                {"error": "Old password is incorrect."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if len(new_password) < 6:
+            return Response(
+                {"error": "New password must be at least 6 characters."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if old_password == new_password:
+            return Response(
+                {"error": "New password must be different from old password."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response({"message": "Password changed successfully."},
+                        status=status.HTTP_200_OK)
+
+####ADMIN VIEWS####  
 class UserListAPIView(APIView):
     permission_classes = [IsAdminUser]
     
     def get(self, request):
-        
         users = User.objects.all().values('id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'date_joined', 'last_login')
         return Response(users, status=status.HTTP_200_OK)
     

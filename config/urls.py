@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from accounts.views import RegisterAPI, LoginAPIView, UpdateProfileView, UserListAPIView, ChangeAccountStatusAPIView, GetProfileView
+from accounts.views import ChangePasswordView, RegisterAPI, LoginAPIView, UpdateProfileView, UserListAPIView, ChangeAccountStatusAPIView, GetProfileView
 
 
 urlpatterns = [
@@ -31,6 +31,7 @@ urlpatterns = [
     # User profile
     path('api/accounts/profile/', GetProfileView.as_view(), name='get_profile'),
     path('api/accounts/update_profile/', UpdateProfileView.as_view(), name='update_profile'),
+    path('api/accounts/change_password/', ChangePasswordView.as_view(), name='change_password'),
     
     #ADMIN
     #User list
