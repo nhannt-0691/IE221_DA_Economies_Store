@@ -7,8 +7,10 @@ from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+
+User = get_user_model()
 
 ### USER REGISTRATION AND LOGIN VIEW###
 class RegisterAPI(APIView):
@@ -35,8 +37,7 @@ class RegisterAPI(APIView):
      
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
-        
-        
+                
         data = super().validate(attrs)
         self.user.last_login = timezone.now()
         self.user.save(update_fields=["last_login"])
@@ -53,11 +54,14 @@ def build_profile_data(user):
         'email': user.email,
         'first_name': user.first_name,
         'last_name': user.last_name,
+        'phone': user.phone,
+        'address': user.address,
         
         'is_staff': user.is_staff,
         'is_active': user.is_active,
         'date_joined': user.date_joined,
         'last_login': user.last_login,
+        'updated_at': user.updated_at,
     }
 
 
@@ -73,7 +77,7 @@ class UpdateProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request):
-        ALLOWED_FIELDS = {"first_name", "last_name", "email"}
+        ALLOWED_FIELDS = {"first_name", "last_name", "email", "phone", "address"}
 
         for key in request.data.keys():
             if key not in ALLOWED_FIELDS:

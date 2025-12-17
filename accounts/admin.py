@@ -1,11 +1,19 @@
+# accounts/admin.py
 from django.contrib import admin
-from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
-
-admin.site.unregister(User)
+from .models import User
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'last_name', 'first_name', 'is_staff', 'is_superuser', 'is_active', 'last_login', 'date_joined')
-    list_filter = ('is_staff', 'is_superuser', 'is_active')
-    search_fields = ('username', 'email')
+    fieldsets = UserAdmin.fieldsets + (
+        ("Extra info", {"fields": ("phone", "address", "updated_at")}),
+    )
+
+    readonly_fields = ("updated_at",)
+
+    list_display = (
+        "username", "email", "phone", "address",
+        "is_staff", "is_active", "date_joined", "last_login", "updated_at"
+    )
+    search_fields = ("username", "email", "phone", "address")
+    list_filter = ("is_staff", "is_active", "date_joined", "last_login", "updated_at")
