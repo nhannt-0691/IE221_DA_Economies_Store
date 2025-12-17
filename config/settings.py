@@ -18,6 +18,9 @@ from dotenv import load_dotenv
 from urllib.parse import urlparse, parse_qsl
 
 load_dotenv()
+AUTH_USER_MODEL = 'accounts.User'
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,8 +32,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'NO SECRET KEY SET')
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = []
-
-
+TIME_ZONE = 'Asia/Ho_Chi_Minh' 
+USE_TZ = True
 # Application definition
 
 INSTALLED_APPS = [
@@ -119,11 +122,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
