@@ -143,5 +143,6 @@ class DeleteProductView(APIView):
             product = Product.objects.get(id=product_id)
             product.delete()
             return Response({'message': 'Product deleted successfully.' }, status=status.HTTP_200_OK)
+        
         except Product.DoesNotExist:
             return Response({'error': 'Product not found.'}, status=status.HTTP_404_NOT_FOUND)

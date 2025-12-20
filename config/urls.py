@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from accounts.views import ChangePasswordView, RegisterAPI, LoginAPIView, UpdateProfileView, UserListAPIView, ChangeAccountStatusAPIView, GetProfileView
+from cart.views import AddCartItem, DeleteCartItems, UpdateQuantityCartItems, ViewCartItems
 from categories.views import CategoryListView
 from products.views import CreateProductView, DeleteProductView, ProductDetailView, ProductListView, UpdateProductView
 
@@ -51,4 +52,10 @@ urlpatterns = [
     path('api/products/create_product/', CreateProductView.as_view(), name='create_product'),
     path('api/products/update_product/product_id=<int:product_id>', UpdateProductView.as_view(), name='update_product'),
     path('api/products/delete_product/product_id=<int:product_id>', DeleteProductView.as_view(), name='delete_product'),
+    
+    #cart 
+    path('api/cart/add_item/', AddCartItem.as_view(), name='add_cart_item'),
+    path('api/cart/view_items/', ViewCartItems.as_view(), name='view_cart_items'),
+    path('api/cart/delete_item/item_id=<int:item_id>', DeleteCartItems.as_view(), name='delete_cart_item'),
+    path('api/cart/update_quantity/item_id=<int:item_id>', UpdateQuantityCartItems.as_view(), name='update_cart_item'),
 ]
