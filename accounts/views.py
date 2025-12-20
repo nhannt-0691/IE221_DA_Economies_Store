@@ -160,7 +160,7 @@ class UserListAPIView(APIView):
     permission_classes = [IsAdminUser]
     
     def get(self, request):
-        users = User.objects.all().values('id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'date_joined', 'last_login')
+        users = User.objects.all().values('id', 'username', 'email', 'first_name', 'last_name', 'phone', 'address', 'is_staff', 'is_active', 'date_joined', 'last_login', 'updated_at')
         return Response(users, status=status.HTTP_200_OK)
     
 class ChangeAccountStatusAPIView(APIView):

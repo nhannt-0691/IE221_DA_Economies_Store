@@ -1,5 +1,147 @@
 from __future__ import annotations
-
+from time import timezone
+from urllib import request
 from django.shortcuts import render
+from django.utils import timezone
 
-# Create your views here.
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Product
+from rest_framework.permissions import IsAdminUser
+from decimal import Decimal, InvalidOperation
+
+class ProductListView(APIView):
+    def get(self, request):
+        products = Product.objects.all().values('id', 'name', 'description', 'price','image_url', 'category_id', 'is_in_stock', 'created_at', 'updated_at')
+        return Response(products, status= status.HTTP_200_OK)
+    
+
+class ProductDetailView(APIView):
+    def get(self, request, product_id):
+        try:
+            product = Product.objects.values('id', 'name', 'description', 'price','image_url', 'category_id', 'is_in_stock', 'created_at', 'updated_at').get(id=product_id)
+            return Response(product, status=status.HTTP_200_OK)
+        except Product.DoesNotExist:
+            return Response(
+                {"error": "Product not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+def build_profile_data(product):
+    def to_local(dt):
+        return timezone.localtime(dt).strftime("%Y-%m-%d %H:%M:%S") if dt else None
+    return {
+        'id': product.id,
+        'name': product.name,
+        'description': product.description,
+        'price': str(product.price),
+        'image_url': product.image_url,
+        'category_id': product.category_id, 
+        'is_in_stock': product.is_in_stock,
+        'created_at': to_local(product.created_at),
+        'updated_at': to_local(product.updated_at),
+    }
+    
+class CreateProductView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        data = request.data
+        required_fields = ['name', 'price', 'category_id']
+        missing_fields = [f for f in required_fields if not data.get(f)]
+        if missing_fields:
+            return Response(
+                {"error": "Missing required fields", "fields": missing_fields},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Convert price
+        try:
+            price = Decimal(data['price'])
+            if price <= 0:
+                return Response({"error": "Price must be greater than 0"}, status=400)
+        except (InvalidOperation, TypeError):
+            return Response({"error": "Price must be a number"}, status=400)
+
+        # Convert is_in_stock
+        is_in_stock = True
+        if 'is_in_stock' in data:
+            val = str(data['is_in_stock']).lower()
+            is_in_stock = val in ['true', '1', 'yes']
+
+        # Create product
+        product = Product.objects.create(
+            name=data['name'],
+            description=data.get('description', ''),
+            price=price,
+            image_url=data.get('image_url', ''),
+            category_id=data['category_id'],
+            is_in_stock=is_in_stock
+        )
+
+        return Response(
+            {
+                "message": "Product created successfully.",
+                "product": build_profile_data(product)
+            },
+            status=status.HTTP_201_CREATED
+        )
+
+class UpdateProductView(APIView):
+    permission_classes = [IsAdminUser]
+
+    allow_field = ['description', 'price', 'image_url', 'is_in_stock']
+
+    def patch(self, request, product_id):
+        data = request.data
+
+        invalid_fields = [field for field in data if field not in self.allow_field]
+        if invalid_fields:
+            return Response(
+                {"error": "These fields are not allowed to update", "fields": invalid_fields},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        for field in self.allow_field:
+            if field in data:
+                value = data[field]
+
+                if field == 'price':
+                    try:
+                        price = Decimal(value)
+                        if price <= 0:
+                            return Response({"error": "Price must be greater than 0"}, status=400)
+                        setattr(product, field, price)
+                    except (InvalidOperation, TypeError):
+                        return Response({"error": "Price must be a number"}, status=400)
+
+                elif field == 'is_in_stock':
+                    setattr(product, field, str(value).lower() in ['true', '1', 'yes'])
+
+                else:
+                    setattr(product, field, value)
+
+        product.save()
+
+        return Response({
+            "message": "Product updated successfully",
+            "product": build_profile_data(product)
+        }, status=status.HTTP_200_OK)
+
+
+class DeleteProductView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def delete(self, request, product_id):
+        try:
+            product = Product.objects.get(id=product_id)
+            product.delete()
+            return Response({'message': 'Product deleted successfully.' }, status=status.HTTP_200_OK)
+        except Product.DoesNotExist:
+            return Response({'error': 'Product not found.'}, status=status.HTTP_404_NOT_FOUND)
