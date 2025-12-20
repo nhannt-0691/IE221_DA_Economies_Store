@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from accounts.views import ChangePasswordView, RegisterAPI, LoginAPIView, UpdateProfileView, UserListAPIView, ChangeAccountStatusAPIView, GetProfileView
+from categories.views import CategoryListView
+from products.views import CreateProductView, DeleteProductView, ProductDetailView, ProductListView, UpdateProductView
 
 
 urlpatterns = [
@@ -39,4 +41,14 @@ urlpatterns = [
     
     #banned user
     path('api/users/is_active/user_id=<int:user_id>', ChangeAccountStatusAPIView.as_view(), name='change_user_status'),
+    
+    #categories
+    path('api/categories/category_list', CategoryListView.as_view(), name='category_list'),
+    
+    #products
+    path('api/products/product_list', ProductListView.as_view(), name='product_list'),
+    path('api/products/product_detail/product_id=<int:product_id>', ProductDetailView.as_view(), name='product_detail'),
+    path('api/products/create_product/', CreateProductView.as_view(), name='create_product'),
+    path('api/products/update_product/product_id=<int:product_id>', UpdateProductView.as_view(), name='update_product'),
+    path('api/products/delete_product/product_id=<int:product_id>', DeleteProductView.as_view(), name='delete_product'),
 ]
