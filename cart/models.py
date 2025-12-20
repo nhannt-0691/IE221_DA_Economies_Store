@@ -7,6 +7,9 @@ class Cart(models.Model):
         related_name='cart'
     )
 
+    def __str__(self) -> str:
+        return f"Cart {self.id} for {self.user.username}"
+
 
 class CartItem(models.Model):
     cart = models.ForeignKey(
@@ -20,6 +23,8 @@ class CartItem(models.Model):
     )
     quantity = models.PositiveIntegerField(default=1)
 
-
     def __str__(self) -> str:
-        return f"Cart {self.id} for {self.user.username}"
+        return f"{self.quantity} x {self.product.name} in Cart {self.cart.id} ({self.cart.user.username})"
+
+    
+    
