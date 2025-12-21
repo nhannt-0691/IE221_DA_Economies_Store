@@ -19,6 +19,7 @@ from django.urls import path
 from accounts.views import ChangePasswordView, RegisterAPI, LoginAPIView, UpdateProfileView, UserListAPIView, ChangeAccountStatusAPIView, GetProfileView
 from cart.views import AddCartItem, DeleteCartItems, UpdateQuantityCartItems, ViewCartItems
 from categories.views import CategoryListView
+from orders.views import AdminOrderListView, CreateOrderView, DeleteOrderView, OrderDetailView, OrderListView, UpdateInfoStatusView, UpdateOrderStatusView
 from products.views import CreateProductView, DeleteProductView, ProductDetailView, ProductListView, UpdateProductView
 
 
@@ -39,9 +40,9 @@ urlpatterns = [
     #ADMIN
     #User list
     path('api/users/user_list/', UserListAPIView.as_view(), name='user_list'),
-    
-    #banned user
-    path('api/users/is_active/user_id=<int:user_id>', ChangeAccountStatusAPIView.as_view(), name='change_user_status'),
+    path('api/users/change_status/user_id=<int:user_id>', ChangeAccountStatusAPIView.as_view(), name='change_user_status'),
+    path('api/orders/order_list/', AdminOrderListView.as_view(), name='admin_order_list'),
+    path('api/orders/order_status/order_id=<int:order_id>', UpdateOrderStatusView.as_view(), name='admin_order_detail'),
     
     #categories
     path('api/categories/category_list', CategoryListView.as_view(), name='category_list'),
@@ -58,4 +59,11 @@ urlpatterns = [
     path('api/cart/view_items/', ViewCartItems.as_view(), name='view_cart_items'),
     path('api/cart/delete_item/item_id=<int:item_id>', DeleteCartItems.as_view(), name='delete_cart_item'),
     path('api/cart/update_quantity/item_id=<int:item_id>', UpdateQuantityCartItems.as_view(), name='update_cart_item'),
+    
+    #order
+    path('api/orders/create_order/', CreateOrderView.as_view(), name='create_order'),
+    path('api/orders/order_list/', OrderListView.as_view(), name='order_list'),
+    path('api/orders/order_detail/order_id=<int:order_id>', OrderDetailView.as_view(), name='order_detail'),
+    path('api/orders/delete_order/order_id=<int:order_id>', DeleteOrderView.as_view(), name='delete_order'),
+    path('api/orders/update_order/order_id=<int:order_id>', UpdateInfoStatusView.as_view(), name='update_order'),
 ]

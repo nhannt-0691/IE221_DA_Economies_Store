@@ -28,7 +28,7 @@ class ProductDetailView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-def build_profile_data(product):
+def build_product_data(product):
     def to_local(dt):
         return timezone.localtime(dt).strftime("%Y-%m-%d %H:%M:%S") if dt else None
     return {
@@ -56,7 +56,6 @@ class CreateProductView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Convert price
         try:
             price = Decimal(data['price'])
             if price <= 0:
@@ -64,13 +63,11 @@ class CreateProductView(APIView):
         except (InvalidOperation, TypeError):
             return Response({"error": "Price must be a number"}, status=400)
 
-        # Convert is_in_stock
         is_in_stock = True
         if 'is_in_stock' in data:
             val = str(data['is_in_stock']).lower()
             is_in_stock = val in ['true', '1', 'yes']
 
-        # Create product
         product = Product.objects.create(
             name=data['name'],
             description=data.get('description', ''),
@@ -83,7 +80,7 @@ class CreateProductView(APIView):
         return Response(
             {
                 "message": "Product created successfully.",
-                "product": build_profile_data(product)
+                "product": build_product_data(product)
             },
             status=status.HTTP_201_CREATED
         )
@@ -131,7 +128,7 @@ class UpdateProductView(APIView):
 
         return Response({
             "message": "Product updated successfully",
-            "product": build_profile_data(product)
+            "product": build_product_data(product)
         }, status=status.HTTP_200_OK)
 
 

@@ -7,8 +7,11 @@ from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from cart.models import Cart
+from django.contrib.auth import authenticate
 
 User = get_user_model()
 
@@ -37,7 +40,24 @@ class RegisterAPI(APIView):
      
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
-                
+        username = attrs.get("username")
+        password = attrs.get("password")
+
+        if not username or not password:
+            raise AuthenticationFailed("Username and password are required")
+
+        user = authenticate(
+            request=self.context.get("request"),
+            username=username,
+            password=password
+        )
+
+        if not user:
+            raise AuthenticationFailed("Invalid username or password")
+
+        if not user.is_active:
+            raise AuthenticationFailed("User account is disabled")
+        
         data = super().validate(attrs)
         self.user.last_login = timezone.now()
         self.user.save(update_fields=["last_login"])
@@ -46,6 +66,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 class LoginAPIView(TokenObtainPairView):
+    
     serializer_class = CustomTokenObtainPairSerializer
     
 def build_profile_data(user):
@@ -170,6 +191,7 @@ class ChangeAccountStatusAPIView(APIView):
         try:
             user = User.objects.get(id=user_id)
             user.is_active = not user.is_active
+            Cart.objects.filter(user=user).delete()
             user.save()
             return Response({'message': 'User status changed successfully.'}, status=status.HTTP_200_OK)
         except User.DoesNotExist:
