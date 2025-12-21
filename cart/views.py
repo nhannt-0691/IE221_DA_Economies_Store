@@ -16,7 +16,6 @@ class AddCartItem(APIView):
         product_id = request.data.get('product_id')
         quantity = int(request.data.get('quantity', 1))
 
-        # Lấy cart hoặc tạo mới nếu chưa có
         cart, _ = Cart.objects.get_or_create(user=user)
 
         try:
@@ -24,7 +23,6 @@ class AddCartItem(APIView):
         except Product.DoesNotExist:
             return Response({"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Thêm hoặc cập nhật item
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
             product=product,
