@@ -13,7 +13,7 @@ from decimal import Decimal, InvalidOperation
 
 class ProductListView(APIView):
     def get(self, request):
-        products = Product.objects.all().values('id', 'name', 'description', 'price','image_url', 'category_id', 'is_in_stock', 'created_at', 'updated_at')
+        products = Product.objects.all().values('id', 'name', 'description', 'price','image_url', 'category_id','specification', 'brand', 'is_in_stock', 'created_at', 'updated_at')
 
         search = request.query_params.get('search')
         if search:
@@ -23,7 +23,7 @@ class ProductListView(APIView):
 class ProductDetailView(APIView):
     def get(self, request, product_id):
         try:
-            product = Product.objects.values('id', 'name', 'description', 'price','image_url', 'category_id', 'is_in_stock', 'created_at', 'updated_at').get(id=product_id)
+            product = Product.objects.values('id', 'name', 'description', 'price','image_url', 'category_id', 'specification', 'brand', 'is_in_stock', 'created_at', 'updated_at').get(id=product_id)
             return Response(product, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
             return Response(
@@ -41,6 +41,8 @@ def build_product_data(product):
         'price': str(product.price),
         'image_url': product.image_url,
         'category_id': product.category_id, 
+        'specification': product.specification,
+        'brand': product.brand,
         'is_in_stock': product.is_in_stock,
         'created_at': to_local(product.created_at),
         'updated_at': to_local(product.updated_at),
@@ -51,7 +53,7 @@ class CreateProductView(APIView):
 
     def post(self, request):
         data = request.data
-        required_fields = ['name', 'price', 'category_id']
+        required_fields = ['name', 'price', 'category_id', 'brand' ]
         missing_fields = [f for f in required_fields if not data.get(f)]
         if missing_fields:
             return Response(
@@ -77,6 +79,8 @@ class CreateProductView(APIView):
             price=price,
             image_url=data.get('image_url', ''),
             category_id=data['category_id'],
+            specification=data.get('specification', {}),
+            brand=data['brand'],
             is_in_stock=is_in_stock
         )
 
@@ -91,7 +95,7 @@ class CreateProductView(APIView):
 class UpdateProductView(APIView):
     permission_classes = [IsAdminUser]
 
-    allow_field = ['description', 'price', 'image_url', 'is_in_stock']
+    allow_field = ['description', 'price', 'image_url', 'is_in_stock', 'specification']
 
     def patch(self, request, product_id):
         data = request.data
