@@ -13,27 +13,63 @@ class AddCartItem(APIView):
     
     def post(self, request):
         user = request.user
-        product_id = request.data.get('product_id')
-        quantity = int(request.data.get('quantity', 1))
+        product_id = request.data.get("product_id")
+        quantity = request.data.get("quantity", 1)
 
-        cart, _ = Cart.objects.get_or_create(user=user)
+        # Validate input
+        if not product_id:
+            return Response(
+                {"error": "product_id is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
+        try:
+            quantity = int(quantity)
+            if quantity <= 0:
+                raise ValueError
+        except ValueError:
+            return Response(
+                {"error": "quantity must be a positive integer"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get product
         try:
             product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
-            return Response({"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Product not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        cart, _ = Cart.objects.get_or_create(user=user)
 
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
             product=product,
-            defaults={'quantity': quantity}
+            defaults={"quantity": 0}
         )
 
-        if not created:
-            cart_item.quantity += quantity
-            cart_item.save()
+        new_quantity = cart_item.quantity + quantity
 
-        return Response({"message": "Item added to cart successfully."}, status=status.HTTP_200_OK)
+        # Check stock with total quantity
+        if new_quantity > product.stock:
+            return Response(
+                {"error": "Requested quantity exceeds available stock"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        cart_item.quantity = new_quantity
+        cart_item.save()
+
+        return Response(
+            {
+                "message": "Item added to cart successfully",
+                "product_id": product.id,
+                "quantity": cart_item.quantity
+            },
+            status=status.HTTP_200_OK
+        )
 
 class ViewCartItems(APIView):
     permission_classes = [IsAuthenticated]
