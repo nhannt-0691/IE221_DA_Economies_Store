@@ -14,8 +14,11 @@ from decimal import Decimal, InvalidOperation
 class ProductListView(APIView):
     def get(self, request):
         products = Product.objects.all().values('id', 'name', 'description', 'price','image_url', 'category_id', 'is_in_stock', 'created_at', 'updated_at')
+
+        search = request.query_params.get('search')
+        if search:
+            products = products.filter(name__icontains=search)
         return Response(products, status= status.HTTP_200_OK)
-    
 
 class ProductDetailView(APIView):
     def get(self, request, product_id):
