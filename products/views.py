@@ -15,9 +15,15 @@ class ProductListView(APIView):
     def get(self, request):
         products = Product.objects.all().values('id', 'name', 'description', 'price','image_url', 'category_id','specification', 'brand', 'is_in_stock', 'created_at', 'updated_at')
 
-        search = request.query_params.get('search')
-        if search:
-            products = products.filter(name__icontains=search)
+        brand = request.query_params.getlist('brand')
+        if brand:
+            products = products.filter(brand__in=brand)
+            
+        category_name = request.query_params.getlist('category')
+
+        if category_name:
+            products = products.filter(category__name__in=category_name).distinct()
+
         return Response(products, status= status.HTTP_200_OK)
 
 class ProductDetailView(APIView):
