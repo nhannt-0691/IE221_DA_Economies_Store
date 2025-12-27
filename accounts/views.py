@@ -80,7 +80,8 @@ def build_profile_data(user):
         'last_name': user.last_name,
         'phone': user.phone,
         'address': user.address,
-        
+        'rank': user.rank,
+        'total_spent': str(user.total_spent),
         'is_staff': user.is_staff,
         'is_active': user.is_active,
         'date_joined': to_local(user.date_joined),

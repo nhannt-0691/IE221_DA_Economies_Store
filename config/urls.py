@@ -19,7 +19,7 @@ from django.urls import path
 from accounts.views import ChangePasswordView, RegisterAPI, LoginAPIView, UpdateProfileView, UserListAPIView, ChangeAccountStatusAPIView, GetProfileView
 from cart.views import AddCartItem, DeleteCartItems, UpdateQuantityCartItems, ViewCartItems
 from categories.views import CategoryListView
-from orders.views import AdminOrderListView, CreateOrderView, DeleteOrderView, OrderDetailView, OrderListView, UpdateInfoStatusView, UpdateOrderStatusView
+from orders.views import  AdminOrderListView, CreateOrderView, DeleteOrderView, OrderDetailView, OrderListView, UpdateInfoStatusView, AdminUpdateOrderStatusView
 from products.views import CreateProductView, DeleteProductView, ProductDetailView, ProductListView, UpdateProductView
 
 
@@ -42,7 +42,6 @@ urlpatterns = [
     path('api/users/user_list/', UserListAPIView.as_view(), name='user_list'),
     path('api/users/change_status/user_id=<int:user_id>', ChangeAccountStatusAPIView.as_view(), name='change_user_status'),
     path('api/orders/order_list/', AdminOrderListView.as_view(), name='admin_order_list'),
-    path('api/orders/order_status/order_id=<int:order_id>', UpdateOrderStatusView.as_view(), name='admin_order_detail'),
     
     #categories
     path('api/categories/category_list', CategoryListView.as_view(), name='category_list'),
@@ -66,4 +65,5 @@ urlpatterns = [
     path('api/orders/order_detail/order_id=<int:order_id>', OrderDetailView.as_view(), name='order_detail'),
     path('api/orders/delete_order/order_id=<int:order_id>', DeleteOrderView.as_view(), name='delete_order'),
     path('api/orders/update_order/order_id=<int:order_id>', UpdateInfoStatusView.as_view(), name='update_order'),
+    path('api/orders/update_order_status/order_id=<int:order_id>', AdminUpdateOrderStatusView.as_view(), name='update_order_status'),
 ]
