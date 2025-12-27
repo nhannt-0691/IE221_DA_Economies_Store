@@ -1,4 +1,5 @@
 from django.db import models
+from accounts.models import User
 
 
 class Order(models.Model):
@@ -24,7 +25,14 @@ class Order(models.Model):
     customer_name = models.CharField(max_length=255)
     customer_phone = models.CharField(max_length=20)        
     customer_address = models.TextField()
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    rank_at_time = models.CharField(
+        max_length=20,
+        choices=User.RANK_CHOICE,
+        default=User.RANK_IRON
+    )
+    subtotal_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    final_amount = models.DecimalField(max_digits=12, decimal_places=2)
     payment_method = models.CharField(max_length=50)
     order_status = models.CharField(max_length=30, choices=ORDER_STATUS_CHOICES,
         default=PENDING)

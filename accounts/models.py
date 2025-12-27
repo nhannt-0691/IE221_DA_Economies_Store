@@ -24,6 +24,12 @@ class User(AbstractUser):
         choices=RANK_CHOICE,
         default=RANK_IRON
     )
+    
+    total_spent = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0.00
+    )
 
     updated_at = models.DateTimeField(auto_now=True)
 
