@@ -53,7 +53,7 @@ class AddCartItem(APIView):
         new_quantity = cart_item.quantity + quantity
 
         # Check stock with total quantity
-        if new_quantity > product.is_in_stock:
+        if not product.is_in_stock:
             return Response(
                 {"error": "Requested quantity exceeds available stock"},
                 status=status.HTTP_400_BAD_REQUEST

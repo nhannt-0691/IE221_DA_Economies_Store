@@ -13,23 +13,57 @@ from decimal import Decimal, InvalidOperation
 
 class ProductListView(APIView):
     def get(self, request):
+        products = Product.objects.filter(is_deleted=False)
         products = Product.objects.all().values('id', 'name', 'description', 'price','image_url', 'category_id','specification', 'brand', 'is_in_stock', 'created_at', 'updated_at')
 
-        brand = request.query_params.getlist('brand')
-        if brand:
-            products = products.filter(brand__in=brand)
-            
-        category_name = request.query_params.getlist('category')
+        #Brand
+        brand_param = request.query_params.get('brand')
+        if brand_param:
+            brand_list = [b.strip() for b in brand_param.split(',') if b.strip()]
+            products = products.filter(brand__in=brand_list)
+        #Category
+        category_param = request.query_params.get('category')
+        if category_param:
+            category_list = [c.strip() for c in category_param.split(',') if c.strip()]
+            products = products.filter(category__name__in=category_list).distinct()
+        #Price
+        min_price = request.query_params.get('min_price')
+        max_price = request.query_params.get('max_price')
 
-        if category_name:
-            products = products.filter(category__name__in=category_name).distinct()
+        try:
+            if min_price:
+                products = products.filter(price__gte=Decimal(min_price))
+            if max_price:
+                products = products.filter(price__lte=Decimal(max_price))
+        except InvalidOperation:
+            return Response(
+                {"error": "Invalid price format"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        products = products.values(
+            'id', 'name', 'description', 'price',
+            'image_url', 'category_id',
+            'specification', 'brand',
+            'is_in_stock', 'created_at', 'updated_at'
+        )
 
         return Response(products, status= status.HTTP_200_OK)
 
 class ProductDetailView(APIView):
     def get(self, request, product_id):
         try:
-            product = Product.objects.values('id', 'name', 'description', 'price','image_url', 'category_id', 'specification', 'brand', 'is_in_stock', 'created_at', 'updated_at').get(id=product_id)
+            product = (
+                Product.objects
+                .filter(is_deleted=False)
+                .values(
+                    'id', 'name', 'description', 'price',
+                    'image_url', 'category_id',
+                    'specification', 'brand',
+                    'is_in_stock', 'created_at', 'updated_at'
+                )
+                .get(id=product_id)
+            )
             return Response(product, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
             return Response(
@@ -150,9 +184,56 @@ class DeleteProductView(APIView):
 
     def delete(self, request, product_id):
         try:
-            product = Product.objects.get(id=product_id)
-            product.delete()
-            return Response({'message': 'Product deleted successfully.' }, status=status.HTTP_200_OK)
-        
+            product = Product.objects.get(id=product_id, is_deleted=False)
+            product.is_deleted = True
+            product.deleted_at = timezone.now()
+            product.save(update_fields=['is_deleted', 'deleted_at'])
+
+            return Response(
+                {"message": "Product soft deleted successfully."},
+                status=status.HTTP_200_OK
+            )
+
         except Product.DoesNotExist:
-            return Response({'error': 'Product not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Product not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+class RestoreProductView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, product_id):
+        try:
+            product = Product.objects.get(id=product_id, is_deleted=True)
+
+            product.is_deleted = False
+            product.deleted_at = None
+            product.save(update_fields=['is_deleted', 'deleted_at'])
+
+            return Response(
+                {
+                    "message": "Product restored successfully.",
+                    "product": build_product_data(product)
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except Product.DoesNotExist:
+            return Response(
+                {"error": "Deleted product not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+class DeletedProductListView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        products = Product.objects.filter(is_deleted=True)
+
+        data = [build_product_data(p) for p in products]
+
+        return Response(
+            {"deleted_products": data},
+            status=status.HTTP_200_OK
+        )
