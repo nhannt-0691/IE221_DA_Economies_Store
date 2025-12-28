@@ -29,17 +29,16 @@ def build_order_data(order):
                 'product_id': item.product.id,
                 'product_name': item.product.name,
                 'quantity': item.quantity,
-                'price_at_order': str(item.price_at_order)
+                'price_at_order': float(item.price_at_order)  # <-- convert
             } for item in order.items.all()
         ],
         'rank_at_time': order.rank_at_time,
-        'subtotal_amount': order.subtotal_amount,
-        'discount_amount': order.discount_amount,
-        'final_amount': order.final_amount,
+        'subtotal_amount': float(order.subtotal_amount),   # <-- convert
+        'discount_amount': float(order.discount_amount),   # <-- convert
+        'final_amount': float(order.final_amount),         # <-- convert
         'payment_method': order.payment_method,
         'order_status': order.order_status,
         'ordered_at': to_local(order.ordered_at),
-        
     }
 
 class CreateOrderView(APIView):
@@ -86,7 +85,6 @@ class CreateOrderView(APIView):
             subtotal_amount += Decimal(product.price) * quantity
             product_ids.append(product.id)
 
-        # 👉 TÍNH RANK TẠI THỜI ĐIỂM ĐẶT HÀNG
         rank, bonus_percent = get_rank_by_amount(user.total_spent)
 
         discount_amount = (
@@ -128,11 +126,11 @@ class CreateOrderView(APIView):
                 "message": "Order created successfully",
                 "order_id": order.id,
                 "rank_at_time": rank,
-                "subtotal_amount": str(subtotal_amount),
+                "subtotal_amount": subtotal_amount,
                 
                 "bonus_percent": bonus_percent,
-                "discount_amount": str(discount_amount),
-                "final_amount": str(final_amount)
+                "discount_amount": discount_amount,
+                "final_amount": final_amount
             },
             status=201
         )
@@ -144,9 +142,13 @@ class OrderListView(APIView):
 
     def get(self, request):
         user = request.user
-        orders = Order.objects.filter(user=user).order_by('ordered_at')
+
+        orders = Order.objects.filter(user=user).order_by('-final_amount')
+        
         orders_data = [build_order_data(order) for order in orders]
         return Response({"orders": orders_data}, status=200)
+
+
     
 class OrderDetailView(APIView):
     permission_classes = [IsAuthenticated]
@@ -221,8 +223,11 @@ class AdminOrderListView(APIView):
         orders_data = [build_order_data(order) for order in orders]
         return Response({"orders": orders_data}, status=200)
     
+    
+    
 ALLOWED_TRANSITIONS = {
-    Order.PENDING: [Order.SHIPPING, Order.CANCELLED],
+    Order.PENDING: [Order.CONFIRMED, Order.CANCELLED],
+    Order.CONFIRMED: [Order.SHIPPING, Order.CANCELLED],
     Order.SHIPPING: [Order.COMPLETED, Order.CANCELLED],
     Order.COMPLETED: [],
     Order.CANCELLED: [],

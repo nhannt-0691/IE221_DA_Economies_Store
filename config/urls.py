@@ -61,7 +61,7 @@ urlpatterns = [
     
     #order
     path('api/orders/create_order/', CreateOrderView.as_view(), name='create_order'),
-    path('api/orders/order_list/', OrderListView.as_view(), name='order_list'),
+    path('api/orders/orders_list/', OrderListView.as_view(), name='order_list'),
     path('api/orders/order_detail/order_id=<int:order_id>', OrderDetailView.as_view(), name='order_detail'),
     path('api/orders/delete_order/order_id=<int:order_id>', DeleteOrderView.as_view(), name='delete_order'),
     path('api/orders/update_order/order_id=<int:order_id>', UpdateInfoStatusView.as_view(), name='update_order'),
