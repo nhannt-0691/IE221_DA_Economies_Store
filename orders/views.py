@@ -14,6 +14,8 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.db import transaction
 from decimal import Decimal
 from accounts.constants import get_rank_by_amount
+from django.db.models import Sum, Count, Avg
+from datetime import datetime
 
 def build_order_data(order):
     def to_local(dt):
@@ -49,7 +51,7 @@ class CreateOrderView(APIView):
         user = request.user
         data = request.data
 
-        cart_items = data.get("cart_items", [])
+        cart_items = CartItem.objects.filter(cart__user=user)
         if not cart_items:
             return Response({"error": "Cart is empty"}, status=400)
 
@@ -59,8 +61,8 @@ class CreateOrderView(APIView):
 
         # Gom số lượng
         for item in cart_items:
-            product_id = item.get("product_id")
-            quantity = int(item.get("quantity", 1))
+            product_id = item.product_id
+            quantity = item.quantity
 
             if quantity <= 0:
                 return Response(
@@ -301,6 +303,52 @@ class AdminUpdateOrderStatusView(APIView):
                 "order": build_order_data(order),
                 "user_total_spent": str(user.total_spent),
                 "user_rank": user.rank
+            },
+            status=status.HTTP_200_OK
+        )
+class RevenueStatisticsView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        from_date = request.GET.get("from")
+        to_date = request.GET.get("to")
+
+        orders = Order.objects.filter(order_status=Order.COMPLETED)
+
+        # Lọc theo thời gian nếu có
+        if from_date:
+            try:
+                from_date = datetime.strptime(from_date, "%Y-%m-%d")
+                orders = orders.filter(ordered_at__date__gte=from_date)
+            except ValueError:
+                return Response(
+                    {"error": "Invalid from date format. Use YYYY-MM-DD"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        if to_date:
+            try:
+                to_date = datetime.strptime(to_date, "%Y-%m-%d")
+                orders = orders.filter(ordered_at__date__lte=to_date)
+            except ValueError:
+                return Response(
+                    {"error": "Invalid to date format. Use YYYY-MM-DD"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        stats = orders.aggregate(
+            total_orders=Count("id"),
+            total_revenue=Sum("final_amount"),
+            average_order_value=Avg("final_amount")
+        )
+
+        return Response(
+            {
+                "from": request.GET.get("from"),
+                "to": request.GET.get("to"),
+                "total_orders": stats["total_orders"] or 0,
+                "total_revenue": float(stats["total_revenue"] or 0),
+                "average_order_value": float(stats["average_order_value"] or 0),
             },
             status=status.HTTP_200_OK
         )

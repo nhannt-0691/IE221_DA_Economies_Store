@@ -19,8 +19,8 @@ from django.urls import path
 from accounts.views import ChangePasswordView, RegisterAPI, LoginAPIView, UpdateProfileView, UserListAPIView, ChangeAccountStatusAPIView, GetProfileView
 from cart.views import AddCartItem, DeleteCartItems, UpdateQuantityCartItems, ViewCartItems
 from categories.views import CategoryListView
-from orders.views import  AdminOrderListView, CreateOrderView, DeleteOrderView, OrderDetailView, OrderListView, UpdateInfoStatusView, AdminUpdateOrderStatusView
-from products.views import CreateProductView, DeleteProductView, ProductDetailView, ProductListView, UpdateProductView
+from orders.views import  AdminOrderListView, CreateOrderView, DeleteOrderView, OrderDetailView, OrderListView, UpdateInfoStatusView, AdminUpdateOrderStatusView, RevenueStatisticsView
+from products.views import CreateProductView, DeleteProductView, ProductDetailView, ProductListView, UpdateProductView, RestoreProductView, DeletedProductListView
 
 
 urlpatterns = [
@@ -52,7 +52,9 @@ urlpatterns = [
     path('api/products/create_product/', CreateProductView.as_view(), name='create_product'),
     path('api/products/update_product/product_id=<int:product_id>', UpdateProductView.as_view(), name='update_product'),
     path('api/products/delete_product/product_id=<int:product_id>', DeleteProductView.as_view(), name='delete_product'),
-    
+    path('api/products/deleted_products/', DeletedProductListView.as_view()),
+    path('api/products/restore_product/product_id=<int:product_id>', RestoreProductView.as_view()),
+
     #cart 
     path('api/cart/add_item/', AddCartItem.as_view(), name='add_cart_item'),
     path('api/cart/view_items/', ViewCartItems.as_view(), name='view_cart_items'),
@@ -66,4 +68,5 @@ urlpatterns = [
     path('api/orders/delete_order/order_id=<int:order_id>', DeleteOrderView.as_view(), name='delete_order'),
     path('api/orders/update_order/order_id=<int:order_id>', UpdateInfoStatusView.as_view(), name='update_order'),
     path('api/orders/update_order_status/order_id=<int:order_id>', AdminUpdateOrderStatusView.as_view(), name='update_order_status'),
+    path('api/statistics/revenue/',RevenueStatisticsView.as_view(),name='revenue_statistics'),
 ]
