@@ -145,7 +145,12 @@ class OrderListView(APIView):
     def get(self, request):
         user = request.user
 
-        orders = Order.objects.filter(user=user).order_by('-final_amount')
+        orders = (
+            Order.objects
+            .filter(user=user)
+            .order_by('-ordered_at')
+            .prefetch_related('items__product')
+        )
         
         orders_data = [build_order_data(order) for order in orders]
         return Response({"orders": orders_data}, status=200)
@@ -172,7 +177,7 @@ class DeleteOrderView(APIView):
         user = request.user
         try:
             order = Order.objects.get(id=order_id, user=user)
-            if order.order_status != 'Pending':
+            if order.order_status != Order.PENDING:
                 return Response({"error": "Only pending orders can be deleted"}, status=400)
             order.delete()
             return Response({"message": "Order deleted successfully"}, status=200)
@@ -204,7 +209,7 @@ class UpdateInfoStatusView(APIView):
             if field in data:
                 value = data[field]
                 
-                if order.order_status != 'Pending':
+                if order.order_status != Order.PENDING:
                     return Response({"error": "Only pending orders can be updated"}, status=400)
                 setattr(order, field, value)
 
