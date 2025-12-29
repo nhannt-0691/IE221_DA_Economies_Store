@@ -13,8 +13,16 @@ from decimal import Decimal, InvalidOperation
 
 class ProductListView(APIView):
     def get(self, request):
-        products = Product.objects.filter(is_deleted=False)
-        products = Product.objects.all().values('id', 'name', 'description', 'price','image_url', 'category_id','specification', 'brand', 'is_in_stock', 'created_at', 'updated_at')
+        products = (
+            Product.objects
+            .filter(is_deleted=False)
+            .values(
+                'id', 'name', 'description', 'price',
+                'image_url', 'category_id',
+                'specification', 'brand',
+                'is_in_stock', 'created_at', 'updated_at'
+            )
+        )
 
         #Brand
         brand_param = request.query_params.get('brand')
