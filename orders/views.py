@@ -16,6 +16,7 @@ from decimal import Decimal
 from accounts.constants import get_rank_by_amount
 from django.db.models import Sum, Count, Avg
 from datetime import datetime
+from utils.email import send_order_email
 
 def build_order_data(order):
     def to_local(dt):
@@ -122,6 +123,8 @@ class CreateOrderView(APIView):
             cart__user=user,
             product_id__in=product_ids
         ).delete()
+        
+        send_order_email(request,user)
 
         return Response(
             {

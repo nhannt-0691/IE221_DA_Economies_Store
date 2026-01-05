@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
+from django.utils import timezone
 class User(AbstractUser):
     RANK_IRON = 'iron'
     RANK_BRONZE = 'bronze'
@@ -32,6 +32,16 @@ class User(AbstractUser):
     )
 
     updated_at = models.DateTimeField(auto_now=True)
+    
+    
 
     def __str__(self):
         return self.username
+
+class EmailOTP(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    otp = models.CharField(max_length=6)
+    expires_at = models.DateTimeField()
+
+    def is_expired(self):
+        return timezone.now() >= self.expires_at
