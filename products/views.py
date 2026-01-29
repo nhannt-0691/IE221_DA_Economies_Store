@@ -236,7 +236,7 @@ class RestoreProductView(APIView):
 class DeletedProductListView(APIView):
     permission_classes = [IsAdminUser]
 
-    def get(self, request):
+    def delete(self, request):
         products = Product.objects.filter(is_deleted=True)
 
         data = [build_product_data(p) for p in products]

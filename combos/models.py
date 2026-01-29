@@ -4,13 +4,15 @@ from django.db import models
 class Combo(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    
+    actual_combo_price = models.DecimalField(max_digits=13, decimal_places=2, null=True, blank=True)
 
     combo_price = models.DecimalField(max_digits=13, decimal_places=2)
 
     is_auto_apply = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
-    max_apply_quantity = models.PositiveIntegerField(null=True, blank=True)
+    max_apply_quantity = models.PositiveIntegerField(default=1)
 
     start_at = models.DateTimeField(null=True, blank=True)
     end_at = models.DateTimeField(null=True, blank=True)

@@ -10,6 +10,7 @@ from rest_framework import status
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from streamlit import user
 from cart.models import Cart
 from django.contrib.auth import authenticate
 from utils.email import send_verification_email, send_reset_password_email, send_locked_email
@@ -176,6 +177,14 @@ class UpdateProfileView(APIView):
         last_name = request.data.get("last_name")
         if last_name:
             user.last_name = last_name
+        
+        phone = request.data.get("phone")
+        if phone:
+            user.phone = phone
+            
+        address = request.data.get("address")
+        if address:
+            user.address = address
 
         user.save()
 
@@ -231,6 +240,12 @@ class ForgotPasswordView(APIView):
         if not email:
             return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
         
+        if not user.is_active:
+            return Response(
+                {"error": "Account is not active"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
@@ -250,6 +265,12 @@ class VerifyPasswordOTPView(APIView):
         if not email or not otp or not new_password:
             return Response({"error": "Email, OTP and new_password are required"}, status=status.HTTP_400_BAD_REQUEST)
         
+        if not user.is_active:
+            return Response(
+                {"error": "Account is locked"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+                
         try:
             user = User.objects.get(email=email)
             otp_obj = EmailOTP.objects.get(user=user)
